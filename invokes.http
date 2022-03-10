@@ -1,0 +1,22 @@
+
+GET http://localhost:3000/cuentas/111000000000000000001 HTTP/1.1
+
+###
+
+GET http://localhost:3000/polizas/auxiliares/cuenta/111000-00000000-0000001 HTTP/1.1
+
+###
+
+GET http://localhost:3000/periodos HTTP/1.1
+
+###
+
+GET http://localhost:3000/polizas/auxiliares HTTP/1.1
+
+###
+POST http://localhost:3000/polizas/auxiliares HTTP/1.1
+content-type: application/json
+{
+    "name": "sample",
+    "time": "Wed, 21 Oct 2015 18:27:50 GMT"
+}

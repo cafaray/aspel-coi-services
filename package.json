@@ -1,0 +1,29 @@
+{
+  "name": "aspel-coi-services",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cafaray/aspel-coi-services.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/cafaray/aspel-coi-services/issues"
+  },
+  "homepage": "https://github.com/cafaray/aspel-coi-services#readme",
+  "dependencies": {
+    "body-parser": "*",
+    "fastify": "^3.25.0",
+    "node-firebird": "^1.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.15"
+  }
+}
