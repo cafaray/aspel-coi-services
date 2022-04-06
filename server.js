@@ -18,6 +18,9 @@ fastify.register(deptosRoutes)
 fastify.register(foliosRoutes)
 fastify.register(periodosRoutes)
 
+fastify.register(require('fastify-multipart'))
+fastify.register(require('fastify-formbody'))
+
 // This loads all plugins defined in routes
 // define your routes in one of these
 /*

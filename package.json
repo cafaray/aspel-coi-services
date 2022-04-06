@@ -21,6 +21,8 @@
   "dependencies": {
     "body-parser": "*",
     "fastify": "^3.25.0",
+    "fastify-formbody": "^5.2.0",
+    "fastify-multipart": "^5.3.1",
     "node-firebird": "^1.0.0"
   },
   "devDependencies": {

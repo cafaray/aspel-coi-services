@@ -2,8 +2,8 @@
 const {getDBInstance} = require('../connection')
 const {AUXILIARES, LIMIT} = require('../../configs/config')
 const cuentas = require('../schema/cuentas')
-const SQL_FIND_ALL = `SELECT ${LIMIT} * FROM ${AUXILIARES}`
-
+const SQL_FIND_ALL = `SELECT ${LIMIT} * FROM ${AUXILIARES} ORDER BY FECHA_POL DESC`
+const DELETE_AUXILIARES_POLIZA = `DELETE FROM ${AUXILIARES} WHERE TIPO_POLI = ? AND NUM_POLIZ = ? AND PERIODO = ? AND EJERCICIO = ?;`
 
 const {promisify} = require('util')
 
@@ -16,7 +16,7 @@ const roundNumber = function (amount) {
     throw new Error(`Bad format for 'amount', expected number and send ${typeof(amount)} with value ${amount}`)
 }
 
-const formatoCuentaContable = (cuentaContable, cb) => {
+async function formatoCuentaContable(cuentaContable) {
     const grupos = cuentaContable.split('-')
     console.log(`grupos: ${grupos}`)
     let dv = 0
@@ -36,11 +36,11 @@ const formatoCuentaContable = (cuentaContable, cb) => {
         }
         const result = `${grupos[0]}${grupos[1]}${grupos[2]}0000000000${dv}`
         console.log(`cuenta contable formatted: ${result}`)
-        setImmediate(() => cb(null, result))
+        return result
     } else {
         const errorMessage = `Unexpected Format for 'cuenta contable', must to use the format like this ****-****-**** and received ${cuentaContable}.`
         console.log(errorMessage)
-        setImmediate(() => cb(errorMessage))
+        return ''
     }
 }
 
@@ -66,6 +66,26 @@ const CAMPOS_TABLA_AUXILIAR = [
     "IDINFADIPAR", 
     "IDUUID"]
 
+async function deleteAuxiliares(tipo, folio, ejercicio, periodo, cb) {
+    try{
+        const dbInstance = await getDBInstance()
+        console.log('DELETING AUXILIARES:', tipo, folio, periodo, ejercicio)
+        dbInstance.query(DELETE_AUXILIARES_POLIZA, [tipo, folio, periodo, ejercicio], (err, data) => {
+            if(err){
+                console.log('Error deleting auxiliares: ', err)
+                setImmediate(() => cb(err))
+            } else {
+                console.log('It seems everything goes well:', data)
+                setImmediate(() => cb(null, data))
+            }            
+            dbInstance.detach()
+        })
+    } catch(err) {
+        console.log('Some exception ocurrs deleting auxiliares', err)
+        setImmediate(() => cb(err))
+    }
+}
+
 async function getAll(cb) {
     try{
         const dbInstance = await getDBInstance()
@@ -85,8 +105,24 @@ async function getAll(cb) {
 }
 async function addAuxiliar(auxiliar, cb) {
     try{
+        let numeroPoliza = auxiliar['NUM_POLIZ']
+        if (numeroPoliza.length < 5) {
+            const padded = (numeroPoliza).toString().padStart(5, ' ')
+            console.log(`padded value ${padded}`)
+            numeroPoliza = padded
+        }        
+
         const dbInstance = await getDBInstance()
-        const cuentaContable = await obtieneCuentaContable(auxiliar['NUM_CTA'])
+        let cuentaContable = await obtieneCuentaContable(auxiliar['NUM_CTA'])
+        console.log('found account: ', cuentaContable)
+        if (cuentaContable==''){
+            cuentaContable = await formatoCuentaContable(auxiliar['NUM_CTA'])
+            console.log('formatted account: ', cuentaContable)
+        }
+        let depto = null
+        if (auxiliar['NUMDEPTO']!=''){
+            depto = auxiliar['NUMDEPTO']
+        }
         const SQL_INSERT = `INSERT INTO ${AUXILIARES} VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING NUM_POLIZ`
         dbInstance.query(SQL_INSERT, [
             auxiliar['TIPO_POLI'],
@@ -99,7 +135,7 @@ async function addAuxiliar(auxiliar, cb) {
             auxiliar['CONCEP_PO'],
             auxiliar['DEBE_HABER'],
             roundNumber(auxiliar['MONTOMOV']),
-            auxiliar['NUMDEPTO'],
+            depto,
             auxiliar['TIPOCAMBIO'],
             CONTRAPAR,
             auxiliar['ORDEN'],
@@ -110,6 +146,8 @@ async function addAuxiliar(auxiliar, cb) {
             ],
             (err, data) => {
                 if(err) {
+                    console.log(err)
+                    console.log(SQL_INSERT)
                     setImmediate(() => cb(err))
                     return
                 }
@@ -126,6 +164,7 @@ async function addAuxiliar(auxiliar, cb) {
 
 async function obtieneCuentaContable(cuentaContable) {
     let cuenta = ''
+    console.log('searching for: ', cuentaContable)
     await getCuentaContable(cuentaContable)
     .then((data) => {
         console.log(`cuentaContable: ${data}`)
@@ -133,18 +172,17 @@ async function obtieneCuentaContable(cuentaContable) {
             cuenta = JSON.parse(data)[0]["NUM_CTA"]
             console.log(`Cuenta contable '${cuenta}' found!`)
         } else {
-            console.log(`The accouunt does not exists, verify number ${cuentaContable}.`)
-            cuenta = ''
+            console.log(`The accouunt does not exists, evaluating the number ${cuentaContable}.`)
         }
     })
     .catch((err) => {
         console.log('error getting data')
         console.log(`===> Error getting data "obtieneCuentaContable":\n${err}`)
         throw err
-    })      
+    })
     return cuenta
 }
 
 module.exports={
-    getAll, addAuxiliar, obtieneCuentaContable, formatoCuentaContable
+    getAll, addAuxiliar, obtieneCuentaContable, formatoCuentaContable, deleteAuxiliares
 }

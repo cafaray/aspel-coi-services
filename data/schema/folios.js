@@ -90,19 +90,24 @@ async function setFolio(tipo, ejercicio, periodo, folio, cb) {
             periodo = periodo.toString()
         }
         console.log(`periodo: ${periodo}`)
-        const SQL_UPDATE_FOLIO = `UPDATE ${FOLIOS} SET FOLIO${periodo} = ${folio} WHERE TIPPOL = ? AND EJERCICIO = ? RETURNING TIPPOL, EJERCICIO, FOLIO${periodo}`
+        const SQL_UPDATE_FOLIO = `UPDATE ${FOLIOS} SET 
+            FOLIO${periodo} = ${folio} 
+            WHERE TIPPOL = '${tipo}' AND EJERCICIO = ${ejercicio} RETURNING TIPPOL, EJERCICIO, FOLIO${periodo}`
+        console.log('Updating folio with: ', SQL_UPDATE_FOLIO)
         const dbInstance = await getDBInstance()
-        dbInstance.query(SQL_UPDATE_FOLIO, [tipo, ejercicio], (err, data) => {
+        dbInstance.query(SQL_UPDATE_FOLIO, (err, data) => {
             if(err) {
                 console.log(`Error querying data\n===>Error in update at setFolio\n${err}`)
                 setImmediate(() => cb(err))
-            }
-            if(data.EJERCICIO){
-                console.log(`Update successful, result with ${data}`)
-                dbInstance.detach()
-                setImmediate(() => cb(null, data))
-            } else {
-                setImmediate(() => cb(new Error('Can not update the record, verify input data.')))
+            } else { 
+                console.log('data from update:', data)
+                if(data){
+                    console.log(`Update successful, result with ${data}`)
+                    dbInstance.detach()
+                    setImmediate(() => cb(null, data))
+                } else {
+                    setImmediate(() => cb(new Error('Can not update the record, verify input data.')))
+                }
             }
         })
     }catch(err){
