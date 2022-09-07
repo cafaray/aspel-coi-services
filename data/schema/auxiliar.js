@@ -123,7 +123,8 @@ async function addAuxiliar(auxiliar, cb) {
         if (auxiliar['NUMDEPTO']!=''){
             depto = auxiliar['NUMDEPTO']
         }
-        const SQL_INSERT = `INSERT INTO ${AUXILIARES} VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING NUM_POLIZ`
+        const SQL_INSERT = `INSERT INTO ${AUXILIARES} VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) `
+        //RETURNING NUM_POLIZ
         dbInstance.query(SQL_INSERT, [
             auxiliar['TIPO_POLI'],
             auxiliar['NUM_POLIZ'],
@@ -151,7 +152,7 @@ async function addAuxiliar(auxiliar, cb) {
                     setImmediate(() => cb(err))
                     return
                 }
-                setImmediate(() => cb(null, data))
+                setImmediate(() => cb(null, {'NUM_POLIZ':auxiliar['NUM_POLIZ']}))
                 dbInstance.detach()
             })
 

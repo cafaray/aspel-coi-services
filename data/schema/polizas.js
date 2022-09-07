@@ -163,14 +163,23 @@ async function deletePoliza(tipo, poliza, ejercicio, periodo, cb) {
 
 async function addPoliza(poliza, cb) {
     try{
+        const dbInstance = await getDBInstance()
+        //.then((data)=>{
+        //    //console.log('data connection:',data)
+        //    dbInstance = data
+        //})
+        //.catch((err)=>{
+        //    console.log('error getting connection:', err)
+        //})
+
         let numeroPoliza = poliza[CAMPOS_TABLA_POLIZA[1]]
         if (numeroPoliza.length < 5) {
             const padded = (numeroPoliza).toString().padStart(5, ' ')
             console.log(`padded value ${padded}`)
             numeroPoliza = padded
         }        
-        const dbInstance = await getDBInstance()
-        const SQL_INSERT = `INSERT INTO ${POLIZAS} VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING NUM_POLIZ`        
+        const SQL_INSERT = `INSERT INTO ${POLIZAS} VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) `        
+        // RETURNING NUM_POLIZ
         dbInstance.query(SQL_INSERT, [
             poliza[CAMPOS_TABLA_POLIZA[0]], // tipo poliza
             numeroPoliza, // numero
@@ -198,7 +207,8 @@ async function addPoliza(poliza, cb) {
             } else {
                 
                 console.log(`I guess everything goews well, no error reported`)
-                setImmediate(() => cb(null, data))
+                //setImmediate(() => cb(null, data))
+                setImmediate(() => cb(null, {'NUM_POLIZ':numeroPoliza}))
                 dbInstance.detach()
             }
         })
